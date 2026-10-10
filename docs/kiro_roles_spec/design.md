@@ -96,11 +96,11 @@ aparece en esta lista para ningún rol de aplicación.
 
 ### 3e. Privilegios sobre rutinas (`role_routine_grants`)
 
-| Rol | Rutina | Tipo | Privilegio |
-|---|---|---|---|
-| `rol_app_escritura` | `sp_crear_pedido(bigint, forma_pago, jsonb)` | `PROCEDURE` | `EXECUTE` |
-| `rol_app_auth` | `fn_autenticar(text, text)` | `FUNCTION` | `EXECUTE` |
-| `rol_soporte` | `fn_resetear_password(bigint, text)` | `FUNCTION` | `EXECUTE` |
+| Rol | Rutina | Privilegio |
+|---|---|---|
+| `rol_app_escritura` | `sp_crear_pedido(bigint, forma_pago, jsonb)` | `EXECUTE` |
+| `rol_app_auth` | `fn_autenticar(text, text)` | `EXECUTE` |
+| `rol_soporte` | `fn_resetear_password(bigint, text)` | `EXECUTE` |
 
 `PUBLIC` no debe aparecer en esta tabla para ninguna de las tres rutinas; la consulta 4e
 lo verifica explícitamente incluyendo `'PUBLIC'` en el filtro de `grantee`.
@@ -133,12 +133,20 @@ ORDER  BY 1, 2;
 -- 4c. Privilegios sobre tablas y vistas
 -- Excluye admin_datos (es dueño; sus privilegios no aparecen como GRANTs explícitos)
 -- y PUBLIC (no debe tener nada otorgado).
+-- NOTA: information_schema.role_table_grants NO incluye vistas materializadas.
+-- El permiso sobre mv_facturacion_categoria_mes se verifica por separado con pg_class (ver abajo).
 SELECT grantee, table_name, privilege_type
 FROM   information_schema.role_table_grants
 WHERE  grantee IN (
            'rol_app_lectura','rol_app_escritura','rol_app_auth',
            'rol_soporte','rol_reportes','app_web')
 ORDER  BY grantee, table_name, privilege_type;
+
+-- Verificar el permiso SELECT de rol_reportes sobre la vista materializada:
+SELECT relname, relacl
+FROM   pg_class
+WHERE  relname = 'mv_facturacion_categoria_mes';
+-- Resultado esperado en relacl: contiene "rol_reportes=r/admin_datos"
 
 -- 4d. Privilegios por columna (solo rol_soporte / tabla usuario)
 SELECT grantee, table_name, column_name, privilege_type
@@ -151,7 +159,8 @@ ORDER  BY column_name;
 -- Incluye PUBLIC en la lista: el resultado esperado para PUBLIC es cero filas
 -- (confirma que REVOKE ALL FROM PUBLIC surtió efecto). Sin este filtro, no es
 -- posible detectar si PUBLIC tiene EXECUTE sobre alguna de las tres rutinas.
-SELECT grantee, routine_name, routine_type, privilege_type
+-- NOTA: la columna routine_type no existe en information_schema.role_routine_grants.
+SELECT grantee, routine_name, privilege_type
 FROM   information_schema.role_routine_grants
 WHERE  routine_schema = 'public'
   AND  routine_name IN (
@@ -207,6 +216,11 @@ WHERE  typname IN ('rol','estado_pedido','forma_pago');
    `admin_datos` y `app_web`.
    Los roles de login deben existir **antes** del cambio de dueño: `ALTER … OWNER TO admin_datos`
    falla si el rol no existe aún.
+   Inmediatamente después de crear `admin_datos`:
+   `GRANT USAGE, CREATE ON SCHEMA public TO admin_datos;`
+   Desde PostgreSQL 15, `PUBLIC` ya no tiene `CREATE` sobre el esquema `public`; sin este
+   `GRANT`, `admin_datos` no puede crear nuevos objetos en el esquema aunque sea dueño de
+   los existentes.
 
 5. **Cambio de dueño** a `admin_datos` (**D4**, **D6**):
    Solo para los objetos que ya existen en la base heredada.
@@ -232,6 +246,20 @@ WHERE  typname IN ('rol','estado_pedido','forma_pago');
      Luego: `REVOKE ALL ON FUNCTION fn_resetear_password(BIGINT, TEXT) FROM PUBLIC;`
 
 7. **Privilegios sobre objetos** — un `GRANT` por rol y por objeto:
+
+   **7.0 Limpieza previa.** Si los roles ya existían de una versión anterior (por ejemplo,
+   de la clase), pueden arrastrar permisos que contradigan la spec. Se revoca todo antes de
+   otorgar, para que el resultado sea exactamente el esperado:
+   ```sql
+   REVOKE ALL ON ALL TABLES    IN SCHEMA public
+       FROM rol_app_lectura, rol_app_escritura, rol_app_auth, rol_soporte, rol_reportes, app_web;
+   REVOKE ALL ON ALL SEQUENCES IN SCHEMA public
+       FROM rol_app_lectura, rol_app_escritura, rol_app_auth, rol_soporte, rol_reportes, app_web;
+   REVOKE ALL ON ALL ROUTINES  IN SCHEMA public
+       FROM rol_app_lectura, rol_app_escritura, rol_app_auth, rol_soporte, rol_reportes, app_web;
+   ```
+
+   Luego los `GRANT` puntuales:
    - `rol_app_lectura`: `SELECT` sobre `v_productos_vigentes`, `v_categorias_vigentes`.
    - `rol_soporte`: `SELECT (id, nombre, apellido, mail, rol, eliminado, created_at) ON usuario`;
      `SELECT ON v_pedidos_resumen`.
@@ -241,20 +269,38 @@ WHERE  typname IN ('rol','estado_pedido','forma_pago');
    - `rol_soporte`: `EXECUTE ON FUNCTION fn_resetear_password(BIGINT, TEXT)`.
 
 8. **Membresías**: `GRANT rol_app_lectura, rol_app_escritura, rol_app_auth TO app_web`.
+   Antes del `GRANT`, revocar membresías heredadas que no corresponden:
+   ```sql
+   REVOKE admin_datos
+       FROM app_web, rol_app_lectura, rol_app_escritura, rol_app_auth, rol_soporte, rol_reportes;
+   REVOKE rol_soporte, rol_reportes FROM app_web;
+   ```
 
 9. **`ALTER DEFAULT PRIVILEGES`** (para objetos futuros creados por `admin_datos`):
    ```sql
    ALTER DEFAULT PRIVILEGES FOR ROLE admin_datos IN SCHEMA public
        REVOKE ALL ON TABLES FROM PUBLIC;
-   ALTER DEFAULT PRIVILEGES FOR ROLE admin_datos IN SCHEMA public
+   ALTER DEFAULT PRIVILEGES FOR ROLE admin_datos
        REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
    ```
+   El `REVOKE` sobre `TABLES` lleva `IN SCHEMA public` porque el privilegio predeterminado
+   de tablas es por esquema. El `REVOKE` sobre `FUNCTIONS` va **sin `IN SCHEMA`**: el
+   privilegio `EXECUTE` para `PUBLIC` es un valor predeterminado global de PostgreSQL y un
+   `REVOKE` acotado a un esquema no lo quita. La entrada en `pg_default_acl` para funciones
+   tendrá `defaclnamespace = 0` (campo de esquema vacío).
+
    Comprobación: `SELECT defaclrole::regrole, defaclnamespace::regnamespace, defaclobjtype, defaclacl FROM pg_default_acl;`
-   Solo aparecerá **una fila**, la de `FUNCTIONS` (`defaclobjtype = 'f'`). El `REVOKE ALL ON TABLES FROM PUBLIC`
+   Solo aparecerá **una fila**, la de `FUNCTIONS` (`defaclobjtype = 'f'`), con
+   `defaclnamespace` vacío o `0`. El `REVOKE ALL ON TABLES FROM PUBLIC`
    no genera entrada en `pg_default_acl` porque PostgreSQL no guarda el privilegio por omisión cuando
    coincide con el valor predeterminado (sin privilegios para PUBLIC); la ausencia de fila para tablas
    es el comportamiento correcto. Para confirmar que funciona, crear una tabla de prueba como `admin_datos`
    y verificar que ningún rol de aplicación recibe `SELECT` automáticamente.
+   Para confirmar el efecto sobre funciones:
+   ```sql
+   SELECT has_function_privilege('app_web', 'fn_autenticar(text,text)', 'EXECUTE');
+   -- esperado: false
+   ```
 
 10. **Bloque de limpieza** (comentado; descomentarlo solo para partir de cero):
     ```sql
@@ -305,6 +351,8 @@ bloque completo. Se ejecuta con `SET LOCAL ROLE` desde `postgres`.
 | T18 | Reportes: REFRESH | `rol_reportes` | `REFRESH MATERIALIZED VIEW mv_facturacion_categoria_mes` | `permission denied` | R5 |
 | T19 | Reportes: tabla base | `rol_reportes` | `SELECT * FROM pedido LIMIT 1` | `permission denied` | R5 |
 | T20 | Verificación "ni más": rol_app_escritura sin SELECT en tablas | `rol_app_escritura` | `SELECT * FROM pedido LIMIT 1` | `permission denied` | R2, D1 |
+| T21 | app_web no puede ejecutar fn_resetear_password | `app_web` | `SELECT fn_resetear_password(1, 'x')` | `permission denied` | R3, R4 |
+| T22 | app_web no puede asumir el rol admin_datos | `app_web` | `SET ROLE admin_datos` | `permission denied` | R7, R8 |
 
 ### Plantilla de bloque para pruebas negativas
 

@@ -129,6 +129,10 @@ esquema `public` sin necesitar privilegios de servidor.
   `ALTER VIEW … OWNER TO`, `ALTER MATERIALIZED VIEW … OWNER TO`,
   `ALTER FUNCTION … OWNER TO`, `ALTER PROCEDURE … OWNER TO`, objeto por objeto.
   **Nunca** con `REASSIGN OWNED BY postgres`.
+- `admin_datos` SHALL recibir `GRANT USAGE, CREATE ON SCHEMA public`: a partir de
+  PostgreSQL 15 `PUBLIC` ya no tiene `CREATE` sobre el esquema `public`, por lo que el
+  rol que administra los objetos necesita ese privilegio explícito para poder crear nuevos
+  objetos bajo su propio nombre.
 - **Justificación:** ser dueño de los objetos alcanza para `ALTER`, `GRANT` y `REFRESH`;
   `CREATEDB` y `CREATEROLE` son privilegios de servidor que no se necesitan para
   administrar una base.
@@ -163,8 +167,13 @@ esquema `public` sin necesitar privilegios de servidor.
   REVOKE ALL ON TABLES FROM PUBLIC`.
 - WHEN se cree una función o procedimiento nuevo
   THEN `PUBLIC` SHALL NOT tener `EXECUTE` por omisión.
-  Se usa `ALTER DEFAULT PRIVILEGES FOR ROLE admin_datos IN SCHEMA public
-  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC`.
+  Se usa `ALTER DEFAULT PRIVILEGES FOR ROLE admin_datos
+  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC` (**sin `IN SCHEMA`**).
+  Motivo: el privilegio `EXECUTE` para `PUBLIC` es un valor predeterminado **global** de
+  PostgreSQL; un `REVOKE` acotado a un esquema no lo quita. La entrada resultante en
+  `pg_default_acl` tendrá `defaclnamespace = 0` (sin esquema). La verificación con
+  `has_function_privilege('app_web', 'fn_autenticar(text,text)', 'EXECUTE')` debe retornar
+  `false` para confirmar que el revoke tuvo efecto.
 
 ---
 
