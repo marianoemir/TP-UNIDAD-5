@@ -1,0 +1,17 @@
+# Respaldos de roles y de bases: contienen hashes de contraseñas. NUNCA al repo.
+respaldos/
+*.dump
+*.bak
+*.backup
+pg_dumpall*.sql
+roles_backup*.sql
+copia_u5_*.sql
+
+# Logs sin anonimizar (el log es un activo sensible; solo se versionan los ya anonimizados en docs/)
+*.log
+postgresql-*.log
+
+# Varios
+.DS_Store
+Thumbs.db
+.env
