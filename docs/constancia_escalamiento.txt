@@ -1,0 +1,21 @@
+﻿SIMULACRO DE INCIDENTE - Parte C
+Fecha: 2026-10-11T13:07:14   Servidor: localhost:5432   Base: copia_u5
+Recordatorio: log_statement debe estar en 'all' para registrar los SELECT.
+
+[paso 0] Preparacion (usuario de prueba y login soporte_sim) - codigo psql: 0
+[paso 1] 5 intentos fallidos como app_web: 5 resultados con 0 filas -> OK
+[paso 2] Inicio de sesion exitoso como app_web: 1 fila -> OK
+[paso 3] Lectura masiva de usuario como soporte_sim: 20007 filas leidas -> OK
+
+[paso 4] Intento de escalamiento como soporte_sim (3 intentos): 3 de 3 fallaron
+---- mensajes del servidor ----
+psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:91: NOTICE:  simulacro: paso 4 - intento de escalamiento
+psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:93: ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
+psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:95: ERROR:  se ha denegado el permiso para definir el rol «admin_datos»
+psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:97: ERROR:  se ha denegado el permiso para crear el rol
+DETALLE:  Sólo los roles con el atributo CREATEROLE pueden crear roles.
+-------------------------------
+RESULTADO: el escalamiento FALLO en los 3 intentos. El esquema de permisos de la Parte A resiste.
+
+[limpieza] Usuario y login de prueba eliminados - codigo psql: 0
