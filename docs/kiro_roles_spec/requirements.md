@@ -84,15 +84,18 @@ contraseñas, sin acceder a datos sensibles ni modificar stock o roles.
   sobre `usuario` THEN el sistema SHALL responder `permission denied`.
 - WHEN `rol_soporte` consulta `v_pedidos_resumen`
   THEN el sistema SHALL retornar filas.
-- WHEN `rol_soporte` ejecuta `SELECT fn_resetear_password(p_usuario_id, p_nueva)`
+- WHEN `rol_soporte` ejecuta `SELECT fn_resetear_password(p_usuario_id, p_nueva)` sobre un usuario
+  no eliminado cuyo `rol` de aplicación no es `ADMIN`
   THEN el sistema SHALL guardar el hash nuevo en `usuario.contrasena`.
+- WHEN `rol_soporte` ejecuta `fn_resetear_password` sobre un usuario con `rol = 'ADMIN'`
+  THEN el sistema SHALL NOT modificar su contraseña (sin error: la fila no se actualiza).
 - WHEN `rol_soporte` intenta modificar `producto`, `pedido`, `detalle_pedido` o ejecutar
   `GRANT` sobre cualquier rol THEN el sistema SHALL responder `permission denied`.
 - **Rol:** `rol_soporte` (grupo, NOLOGIN). **Decisión confirmada D5.**
   **Justificación:** permiso por columna sobre `usuario` (sin `celular` ni `contrasena`)
   porque soporte necesita identificar al cliente y destrabarlo, pero no tiene caso de uso
   que requiera su teléfono; `fn_resetear_password` es `SECURITY DEFINER` y acota la
-  operación a un solo `UPDATE`.
+  operación a un solo `UPDATE` que excluye a los usuarios `ADMIN` de la aplicación.
 
 > **Nota sobre `v_usuario_seguro`:** la vista expone `celular`. `rol_soporte` **no**
 > recibe permiso sobre ella; recibe permiso por columna directamente sobre `usuario`,

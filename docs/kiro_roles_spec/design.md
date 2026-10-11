@@ -221,6 +221,8 @@ WHERE  typname IN ('rol','estado_pedido','forma_pago');
    Desde PostgreSQL 15, `PUBLIC` ya no tiene `CREATE` sobre el esquema `public`; sin este
    `GRANT`, `admin_datos` no puede crear nuevos objetos en el esquema aunque sea dueño de
    los existentes.
+   Justo después: `REVOKE CREATE ON SCHEMA public FROM PUBLIC;` como defensa en profundidad
+   (en PostgreSQL 15 o superior ya es el valor por omisión; se deja explícito).
 
 5. **Cambio de dueño** a `admin_datos` (**D4**, **D6**):
    Solo para los objetos que ya existen en la base heredada.
@@ -241,7 +243,10 @@ WHERE  typname IN ('rol','estado_pedido','forma_pago');
      Inmediatamente después: `ALTER FUNCTION fn_autenticar(TEXT, TEXT) OWNER TO admin_datos;`
      Luego: `REVOKE ALL ON FUNCTION fn_autenticar(TEXT, TEXT) FROM PUBLIC;`
    - `fn_resetear_password` no existe: crear con `CREATE OR REPLACE FUNCTION`, `SECURITY DEFINER`,
-     `SET search_path = public, pg_temp`.
+     `SET search_path = public, pg_temp`. El `UPDATE` filtra `AND eliminado = FALSE AND rol <> 'ADMIN'`:
+     `rol_soporte` no puede resetear la contraseña de un usuario `ADMIN` de la aplicación (cierra un
+     camino de escalamiento lógico: fijar la clave del administrador y entrar con `fn_autenticar`).
+     La función no emite error en ese caso: simplemente no modifica la fila.
      Inmediatamente después: `ALTER FUNCTION fn_resetear_password(BIGINT, TEXT) OWNER TO admin_datos;`
      Luego: `REVOKE ALL ON FUNCTION fn_resetear_password(BIGINT, TEXT) FROM PUBLIC;`
 
@@ -358,7 +363,12 @@ bloque completo. Se ejecuta con `SET LOCAL ROLE` desde `postgres`.
 | T19 | Reportes: tabla base | `rol_reportes` | `SELECT * FROM pedido LIMIT 1` | `permission denied` | R5 |
 | T20 | Verificación "ni más": rol_app_escritura sin SELECT en tablas | `rol_app_escritura` | `SELECT * FROM pedido LIMIT 1` | `permission denied` | R2, D1 |
 | T21 | app_web no puede ejecutar fn_resetear_password | `app_web` | `SELECT fn_resetear_password(1, 'x')` | `permission denied` | R3, R4 |
-| T22 | app_web no puede asumir el rol admin_datos | `app_web` | `SET ROLE admin_datos` | `permission denied` | R7, R8 |
+| T22 | app_web no puede asumir el rol admin_datos | `app_web` | `SELECT pg_has_role('app_web','admin_datos','MEMBER')` | `false` (sin membresía) | R7, R8 |
+| T23 | rol_soporte no puede resetear la contraseña de un ADMIN de la aplicación | `rol_soporte` | `SELECT fn_resetear_password(<id_de_un_ADMIN>, 'NuevaClave123')` y comparar el hash antes y después | sin cambio | R4, R8 |
+
+> **Nota sobre T22:** no se prueba con `SET ROLE admin_datos` desde la sesión de pruebas, porque `SET ROLE` se valida
+> contra el usuario de la sesión (`postgres`, superusuario) y siempre funciona. Se comprueba la membresía, que es lo que
+> habilitaría ese `SET ROLE`. El intento real, conectado como `app_web`, se hace en el simulacro de la Parte C.
 
 ### Plantilla de bloque para pruebas negativas
 

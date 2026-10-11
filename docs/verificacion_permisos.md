@@ -18,7 +18,7 @@ Dueño de las tablas del esquema `public`:
 **Hallazgo (D4):** las cinco tablas eran del superusuario `postgres`, no de `admin_datos`. Por eso
 `ALTER DEFAULT PRIVILEGES FOR ROLE admin_datos` no habría cubierto nada sin el cambio de dueño.
 
-> [COMPLETAR si se capturaron] Atributos de roles (`pg_roles`) y `role_table_grants` previos.
+> Solo se capturó el dueño de las tablas antes de `roles.sql`; los atributos de roles y los permisos previos no se registraron.
 
 ## 2. Ejecución de `roles.sql`
 
