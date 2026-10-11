@@ -9,11 +9,11 @@ Recordatorio: log_statement debe estar en 'all' para registrar los SELECT.
 
 [paso 4] Intento de escalamiento como soporte_sim (3 intentos): 3 de 3 fallaron
 ---- mensajes del servidor ----
-psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:91: NOTICE:  simulacro: paso 4 - intento de escalamiento
-psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:93: ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+psql:sql/simulacro_incidente.sql:91: NOTICE:  simulacro: paso 4 - intento de escalamiento
+psql:sql/simulacro_incidente.sql:93: ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
 DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
-psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:95: ERROR:  se ha denegado el permiso para definir el rol «admin_datos»
-psql:C:/Users/Mariano_Chirino/Documents/GitHub/TP-UNIDAD-5/sql/simulacro_incidente.sql:97: ERROR:  se ha denegado el permiso para crear el rol
+psql:sql/simulacro_incidente.sql:95: ERROR:  se ha denegado el permiso para definir el rol «admin_datos»
+psql:sql/simulacro_incidente.sql:97: ERROR:  se ha denegado el permiso para crear el rol
 DETALLE:  Sólo los roles con el atributo CREATEROLE pueden crear roles.
 -------------------------------
 RESULTADO: el escalamiento FALLO en los 3 intentos. El esquema de permisos de la Parte A resiste.
