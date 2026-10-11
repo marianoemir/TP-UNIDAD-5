@@ -190,9 +190,63 @@ false
 
 Para dejar la prueba reproducible, la función de prueba se eliminó al terminar.
 
-## 5. Pruebas T01–T20 con rol real
+## 5. Pruebas T01–T23 con rol real
 
-> [COMPLETAR] Resultado de cada prueba de la sección 6 de `design.md`.
+Script: `sql/verificacion_roles.sql`, ejecutado como `postgres` en `copia_u5`. Cada prueba corre con
+`SET LOCAL ROLE <rol>` dentro de un subbloque que siempre termina en excepción, así que no deja cambios.
+T01 a T21 vienen de la sección 6 de `design.md`; T22 y T23 se agregaron durante el trabajo.
+
+Resultado final (23 de 23 en `OK`):
+
+```
+"T01"  "app_web"            "filas"          "filas"          "OK"
+"T02"  "app_web"            "denegado"       "denegado"       "OK"
+"T03"  "app_web"            "denegado"       "denegado"       "OK"
+"T04"  "app_web"            "ok"             "ok"             "OK"
+"T05"  "app_web"            "denegado"       "denegado"       "OK"
+"T06"  "app_web"            "denegado"       "denegado"       "OK"
+"T07"  "app_web"            "ok"             "ok"             "OK"
+"T08"  "app_web"            "denegado"       "denegado"       "OK"
+"T09"  "rol_soporte"        "filas"          "filas"          "OK"
+"T10"  "rol_soporte"        "denegado"       "denegado"       "OK"
+"T11"  "rol_soporte"        "denegado"       "denegado"       "OK"
+"T12"  "rol_soporte"        "denegado"       "denegado"       "OK"
+"T13"  "rol_soporte"        "filas"          "filas"          "OK"
+"T14"  "rol_soporte"        "ok"             "ok"             "OK"
+"T15"  "rol_soporte"        "denegado"       "denegado"       "OK"
+"T16"  "rol_soporte"        "denegado"       "denegado"       "OK"
+"T17"  "rol_reportes"       "filas"          "filas"          "OK"
+"T18"  "rol_reportes"       "denegado"       "denegado"       "OK"
+"T19"  "rol_reportes"       "denegado"       "denegado"       "OK"
+"T20"  "rol_app_escritura"  "denegado"       "denegado"       "OK"
+"T21"  "app_web"            "denegado"       "denegado"       "OK"
+"T22"  "app_web"            "sin_membresia"  "sin_membresia"  "OK"
+"T23"  "rol_soporte"        "sin_cambio"     "sin_cambio"     "OK"
+```
+
+Columnas: prueba, rol, resultado esperado, resultado obtenido, estado.
+`denegado` = `permission denied` o `must be owner`; `filas` = funciona y devuelve al menos una fila.
+
+### Historia de las corridas
+
+| Corrida | Resultado | Causa |
+|---|---|---|
+| 1.ª | 21 de 23. `FALLO` en T22 y T23 | **T22:** la prueba estaba mal diseñada. `SET ROLE` se valida contra el usuario de la sesión (`postgres`, superusuario) y siempre funciona, por lo que no mide los permisos de `app_web`. Se reemplazó por la comprobación de membresía con `pg_has_role('app_web','admin_datos','MEMBER')`. **T23:** detectó que el filtro `rol <> 'ADMIN'` de `fn_resetear_password` estaba en el archivo `roles.sql` pero **no aplicado en la base** |
+| 2.ª y 3.ª | 22 de 23. T22 en `OK`, T23 en `FALLO` | `pg_get_functiondef` mostró que la función seguía sin el filtro: `roles.sql` no se había re-ejecutado con `COMMIT` desde la edición |
+| 4.ª | **23 de 23** | Se re-ejecutó `roles.sql` con `COMMIT` (avisos de membresías ya existentes, prueba de re-ejecutabilidad). `pg_get_functiondef` confirmó el `AND rol <> 'ADMIN'` |
+
+### Qué demuestran
+
+- **R1, R2, R3:** `app_web` lee solo las vistas del catálogo, crea pedidos únicamente con `sp_crear_pedido` y no puede
+  leer ni escribir tablas ni la columna `contrasena`.
+- **R4:** `rol_soporte` lee las columnas permitidas de `usuario` y `v_pedidos_resumen`, no puede leer `contrasena`,
+  `celular` ni hacer `SELECT *`, y puede ejecutar el reseteo acotado.
+- **R5:** `rol_reportes` solo lee la vista materializada y no puede refrescarla ni leer tablas base.
+- **R8:** `rol_soporte` no puede otorgarse `admin_datos` (T15); `app_web` no es miembro de `admin_datos` (T22).
+- **Escalamiento lógico (T23):** `rol_soporte` no puede resetear la contraseña de un usuario `ADMIN` de la aplicación.
+  La función no emite error en ese caso: simplemente no modifica la fila.
+- **Límite de T22:** prueba la membresía, no una conexión real. Intentar `SET ROLE admin_datos` conectado como
+  `app_web` se ejercita en el simulacro de la Parte C.
 
 ## 6. Resumen
 
@@ -206,4 +260,4 @@ Para dejar la prueba reproducible, la función de prueba se eliminó al terminar
 | Vista materializada (`relacl`) | Coincide |
 | Dueños de objetos (4f) | Coincide |
 | Default privileges de funciones (`f_prueba`) | Coincide |
-| Pruebas T01–T20 | Pendiente |
+| Pruebas T01–T23 con rol real | Coincide (23 de 23) |

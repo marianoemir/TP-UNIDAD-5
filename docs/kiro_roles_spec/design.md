@@ -296,10 +296,16 @@ WHERE  typname IN ('rol','estado_pedido','forma_pago');
    coincide con el valor predeterminado (sin privilegios para PUBLIC); la ausencia de fila para tablas
    es el comportamiento correcto. Para confirmar que funciona, crear una tabla de prueba como `admin_datos`
    y verificar que ningún rol de aplicación recibe `SELECT` automáticamente.
-   Para confirmar el efecto sobre funciones:
+   Para confirmar el efecto sobre funciones **nuevas** (no sirve probar con `fn_autenticar`: `app_web`
+   hereda `EXECUTE` de `rol_app_auth`, así que daría `true`), se crea una función de prueba como
+   `admin_datos`, se consulta y se borra:
    ```sql
-   SELECT has_function_privilege('app_web', 'fn_autenticar(text,text)', 'EXECUTE');
-   -- esperado: false
+   SET ROLE admin_datos;
+   CREATE FUNCTION public.f_prueba() RETURNS int LANGUAGE sql AS 'SELECT 1';
+   RESET ROLE;
+   SELECT has_function_privilege('app_web', 'public.f_prueba()', 'EXECUTE');
+   -- esperado: false (PUBLIC no recibe EXECUTE sobre funciones nuevas)
+   DROP FUNCTION public.f_prueba();
    ```
 
 10. **Bloque de limpieza** (comentado; descomentarlo solo para partir de cero):

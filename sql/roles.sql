@@ -76,6 +76,8 @@ ALTER ROLE app_web     LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
 -- admin_datos es dueño de los objetos y debe poder crear nuevos en public
 -- (desde PostgreSQL 15 PUBLIC ya no tiene CREATE sobre ese esquema).
 GRANT USAGE, CREATE ON SCHEMA public TO admin_datos;
+-- Defensa en profundidad: quitar CREATE residual de PUBLIC sobre el esquema.
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
 -- ----------------------------------------------------------------------------
 -- Paso 5. D4/D6: la propiedad pasa a admin_datos, objeto por objeto.
@@ -152,7 +154,8 @@ BEGIN
     UPDATE usuario
     SET    contrasena = crypt(p_nueva, gen_salt('bf'))
     WHERE  id = p_usuario_id
-    AND    eliminado = FALSE;
+    AND    eliminado = FALSE
+    AND    rol <> 'ADMIN';
 END;
 $$;
 ALTER FUNCTION fn_resetear_password(BIGINT, TEXT) OWNER TO admin_datos;
