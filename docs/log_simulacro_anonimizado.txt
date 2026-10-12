@@ -1,0 +1,85 @@
+-- Log anonimizado — Parte C.3 (simulacro de incidente)
+-- Base propia copia_u5, 2026-10-12 08:21:56 -03 a 08:22:04 -03, log_statement='all'.
+-- Recorte entre 'simulacro: preparacion' y 'simulacro: paso 4'.
+-- Anonimización aplicada (criterio usuario_anon, valores sintéticos deterministas):
+--   cliente.simulacro@example.com -> usuario.sim.0001@ejemplo.test
+--   'Cliente' / 'Simulacro' -> 'Usuario' / 'Simulado'
+--   '2610000000' -> '2000000000'
+--   'ClaveSimulacro-2026' -> 'CLAVE_OK_SINTETICA'
+--   'intento_incorrecto_N' -> 'CLAVE_ERRONEA_N'
+--   'Sim-Soporte-2026' -> 'CLAVE_SOPORTE_TEST'
+--   host=::1 -> host=IP_ANONIMIZADA
+-- Se conservan roles del motor (postgres, app_web, soporte_sim, admin_datos),
+-- timestamps y textos de sentencia: son lo necesario para auditar (quién/qué/cuándo).
+-- Se excluyó ruido de pgAdmin (pga4dash) anterior y posterior al recorte.
+
+2026-10-12 08:21:56 -03 LOG:  conexión recibida: host=IP_ANONIMIZADA port=54959
+2026-10-12 08:21:56 -03 LOG:  conexión autenticada: identidad="postgres" método=scram-sha-256
+2026-10-12 08:21:56 -03 LOG:  conexión autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-12 08:21:56 -03 LOG:  sentencia: SELECT (0 = 0) AS p0, (0 = 1) AS p1, (0 = 2) AS p2,
+               (0 = 3) AS p3, (0 = 4) AS p4, (0 = 9) AS p9
+2026-10-12 08:21:56 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'simulacro: preparacion'; END $$;
+2026-10-12 08:21:56 -03 LOG:  sentencia: INSERT INTO usuario (nombre, apellido, mail, celular, contrasena, rol)
+        SELECT 'Usuario', 'Simulado', 'usuario.sim.0001@ejemplo.test', '2000000000',
+               crypt('CLAVE_OK_SINTETICA', gen_salt('bf')), 'USUARIO'
+        WHERE NOT EXISTS (
+            SELECT 1 FROM usuario WHERE mail = 'usuario.sim.0001@ejemplo.test');
+2026-10-12 08:21:56 -03 LOG:  sentencia: SELECT format('CREATE ROLE soporte_sim LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L',
+                      'CLAVE_SOPORTE_TEST')
+        WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'soporte_sim')
+2026-10-12 08:21:56 -03 LOG:  sentencia: CREATE ROLE soporte_sim LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD 'CLAVE_SOPORTE_TEST'
+2026-10-12 08:21:56 -03 LOG:  sentencia: SELECT format('ALTER ROLE soporte_sim LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD %L',
+                      'CLAVE_SOPORTE_TEST')
+2026-10-12 08:21:56 -03 LOG:  sentencia: ALTER ROLE soporte_sim LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD 'CLAVE_SOPORTE_TEST'
+2026-10-12 08:21:56 -03 LOG:  sentencia: GRANT rol_soporte TO soporte_sim;
+2026-10-12 08:21:56 -03 LOG:  desconexión: duración de sesión: 0:00:00.066 usuario=postgres base=copia_u5 host=IP_ANONIMIZADA port=54959
+2026-10-12 08:21:57 -03 LOG:  conexión recibida: host=IP_ANONIMIZADA port=55506
+2026-10-12 08:21:57 -03 LOG:  conexión autenticada: identidad="app_web" método=scram-sha-256
+2026-10-12 08:21:57 -03 LOG:  conexión autorizada: usuario=app_web base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-12 08:21:57 -03 LOG:  sentencia: SELECT (1 = 0) AS p0, (1 = 1) AS p1, (1 = 2) AS p2,
+               (1 = 3) AS p3, (1 = 4) AS p4, (1 = 9) AS p9
+2026-10-12 08:21:57 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'simulacro: paso 1 - intentos fallidos (inicio)'; END $$;
+2026-10-12 08:21:57 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('usuario.sim.0001@ejemplo.test', 'CLAVE_ERRONEA_1');
+2026-10-12 08:21:57 -03 LOG:  sentencia: DO $$ BEGIN PERFORM pg_sleep(1); END $$;
+2026-10-12 08:21:58 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('usuario.sim.0001@ejemplo.test', 'CLAVE_ERRONEA_2');
+2026-10-12 08:21:58 -03 LOG:  sentencia: DO $$ BEGIN PERFORM pg_sleep(1); END $$;
+2026-10-12 08:21:59 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('usuario.sim.0001@ejemplo.test', 'CLAVE_ERRONEA_3');
+2026-10-12 08:21:59 -03 LOG:  sentencia: DO $$ BEGIN PERFORM pg_sleep(1); END $$;
+2026-10-12 08:22:00 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('usuario.sim.0001@ejemplo.test', 'CLAVE_ERRONEA_4');
+2026-10-12 08:22:00 -03 LOG:  sentencia: DO $$ BEGIN PERFORM pg_sleep(1); END $$;
+2026-10-12 08:22:01 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('usuario.sim.0001@ejemplo.test', 'CLAVE_ERRONEA_5');
+2026-10-12 08:22:01 -03 LOG:  desconexión: duración de sesión: 0:00:04.079 usuario=app_web base=copia_u5 host=IP_ANONIMIZADA port=55506
+2026-10-12 08:22:02 -03 LOG:  conexión recibida: host=IP_ANONIMIZADA port=51721
+2026-10-12 08:22:02 -03 LOG:  conexión autenticada: identidad="app_web" método=scram-sha-256
+2026-10-12 08:22:02 -03 LOG:  conexión autorizada: usuario=app_web base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-12 08:22:02 -03 LOG:  sentencia: SELECT (2 = 0) AS p0, (2 = 1) AS p1, (2 = 2) AS p2,
+               (2 = 3) AS p3, (2 = 4) AS p4, (2 = 9) AS p9
+2026-10-12 08:22:02 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'simulacro: paso 2 - inicio de sesion exitoso'; END $$;
+2026-10-12 08:22:02 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('usuario.sim.0001@ejemplo.test', 'CLAVE_OK_SINTETICA');
+2026-10-12 08:22:02 -03 LOG:  desconexión: duración de sesión: 0:00:00.040 usuario=app_web base=copia_u5 host=IP_ANONIMIZADA port=51721
+2026-10-12 08:22:03 -03 LOG:  conexión recibida: host=IP_ANONIMIZADA port=51722
+2026-10-12 08:22:03 -03 LOG:  conexión autenticada: identidad="soporte_sim" método=scram-sha-256
+2026-10-12 08:22:03 -03 LOG:  conexión autorizada: usuario=soporte_sim base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-12 08:22:03 -03 LOG:  sentencia: SELECT (3 = 0) AS p0, (3 = 1) AS p1, (3 = 2) AS p2,
+               (3 = 3) AS p3, (3 = 4) AS p4, (3 = 9) AS p9
+2026-10-12 08:22:03 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'simulacro: paso 3 - lectura masiva de usuario'; END $$;
+2026-10-12 08:22:03 -03 LOG:  sentencia: SELECT id, nombre, apellido, mail, rol, eliminado, created_at FROM usuario ORDER BY id;
+2026-10-12 08:22:03 -03 LOG:  desconexión: duración de sesión: 0:00:00.201 usuario=soporte_sim base=copia_u5 host=IP_ANONIMIZADA port=51722
+2026-10-12 08:22:04 -03 LOG:  conexión recibida: host=IP_ANONIMIZADA port=51724
+2026-10-12 08:22:04 -03 LOG:  conexión autenticada: identidad="soporte_sim" método=scram-sha-256
+2026-10-12 08:22:04 -03 LOG:  conexión autorizada: usuario=soporte_sim base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-12 08:22:04 -03 LOG:  sentencia: SELECT (4 = 0) AS p0, (4 = 1) AS p1, (4 = 2) AS p2,
+               (4 = 3) AS p3, (4 = 4) AS p4, (4 = 9) AS p9
+2026-10-12 08:22:04 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'simulacro: paso 4 - intento de escalamiento'; END $$;
+2026-10-12 08:22:04 -03 LOG:  sentencia: GRANT admin_datos TO soporte_sim;
+2026-10-12 08:22:04 -03 ERROR:  se ha denegado el permiso para otorgar el rol "admin_datos"
+2026-10-12 08:22:04 -03 DETALLE:  Sólo los roles con la opción ADMIN en el rol "admin_datos" pueden otorgar este rol.
+2026-10-12 08:22:04 -03 SENTENCIA:  GRANT admin_datos TO soporte_sim;
+2026-10-12 08:22:04 -03 LOG:  sentencia: SET ROLE admin_datos;
+2026-10-12 08:22:04 -03 ERROR:  se ha denegado el permiso para definir el rol "admin_datos"
+2026-10-12 08:22:04 -03 SENTENCIA:  SET ROLE admin_datos;
+2026-10-12 08:22:04 -03 LOG:  sentencia: CREATE ROLE intruso_sim LOGIN;
+2026-10-12 08:22:04 -03 ERROR:  se ha denegado el permiso para crear el rol
+2026-10-12 08:22:04 -03 DETALLE:  Sólo los roles con el atributo CREATEROLE pueden crear roles.
+2026-10-12 08:22:04 -03 SENTENCIA:  CREATE ROLE intruso_sim LOGIN;
+2026-10-12 08:22:04 -03 LOG:  desconexión: duración de sesión: 0:00:00.051 usuario=soporte_sim base=copia_u5 host=IP_ANONIMIZADA port=51724
