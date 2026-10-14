@@ -1,43 +1,45 @@
 -- Fragmento de log — Parte B.2 (auditoria_test)
--- Servidor local PG17, base copia_u5, log_statement='all', log_connections=on, log_disconnections=on
--- Recorte entre marcadores 'auditoria_test: inicio' y 'auditoria_test: fin'.
--- Solo contiene datos sintéticos de prueba (CAT_AUDIT_TEST, no.existe.audit@example.com). Sin datos reales.
--- Nota: pgAdmin envía el script como una sola sentencia, por eso el log muestra el bloque completo
--- con un único timestamp. Con psql -f cada sentencia quedaría en una línea LOG separada.
+-- Servidor local PostgreSQL 17 (Windows), base copia_u5, 2026-10-14.
+-- Parametros activos: log_connections=on, log_disconnections=on, log_statement=all.
+-- Generado con sql/auditoria_test.ps1: corre sql/auditoria_test.sql con psql -f (una sentencia por linea LOG)
+-- y agrega un intento real de conexion de app_web con contrasena incorrecta.
+-- Recorte entre las marcas 'auditoria_b: inicio' y 'auditoria_b: fin'.
+-- Solo datos sinteticos de prueba (CAT_AUDIT_TEST, no.existe.audit@example.com, clave_incorrecta_1). Sin datos reales.
+-- Ediciones sobre el texto extraido: se restauraron las tildes y las comillas angulares que la extraccion habia
+-- dañado (aparecian como "?") y se quitaron lineas en blanco repetidas. No se cambio ninguna sentencia, hora ni puerto.
 
-2026-10-12 08:12:02 -03 LOG:  sentencia: -- auditoria_test.sql — Parte B.2: secuencia de prueba de auditoria
-        -- SE EJECUTA SOLO contra la base propia (copia_u5).
-        -- Secuencia pedida: lectura + insercion + actualizacion + login fallido.
-        -- Todo va en una transaccion con ROLLBACK para no dejar basura en copia_u5.
-
-        -- Proteccion: no correr sobre la plantilla ni sobre 'postgres'.
-        DO $$
+2026-10-14 20:55:26 -03 LOG:  conexión recibida: host=::1 port=46714
+2026-10-14 20:55:26 -03 LOG:  conexión autenticada: identidad=«postgres» método=scram-sha-256 (C:/Program Files/PostgreSQL/17/data/pg_hba.conf:117)
+2026-10-14 20:55:26 -03 LOG:  conexión autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT 'auditoria_b: inicio' AS marca;
+2026-10-14 20:55:26 -03 LOG:  desconexión: duración de sesión: 0:00:00.027 usuario=postgres base=copia_u5 host=::1 port=46714
+2026-10-14 20:55:26 -03 LOG:  conexión recibida: host=::1 port=46715
+2026-10-14 20:55:26 -03 LOG:  conexión autenticada: identidad=«postgres» método=scram-sha-256 (C:/Program Files/PostgreSQL/17/data/pg_hba.conf:117)
+2026-10-14 20:55:26 -03 LOG:  conexión autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-14 20:55:26 -03 LOG:  sentencia: DO $$
         BEGIN
             IF current_database() IN ('postgres', 'plantilla_food_store') THEN
                 RAISE EXCEPTION 'Base equivocada (%). Conectarse a copia_u5.', current_database();
             END IF;
         END $$;
-
-        BEGIN;
-
-        DO $$ BEGIN RAISE NOTICE 'auditoria_test: inicio'; END $$;
-
-        -- 1. LECTURA: catalogo publico (operacion rutinaria de app_web).
-        SELECT * FROM v_productos_vigentes LIMIT 5;
-
-        -- 2. INSERCION: categoria de prueba (nombre unico con prefijo para no chocar).
-        INSERT INTO categoria (nombre, descripcion)
+2026-10-14 20:55:26 -03 LOG:  sentencia: BEGIN;
+2026-10-14 20:55:26 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'auditoria_test: inicio'; END $$;
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT * FROM v_productos_vigentes LIMIT 5;
+2026-10-14 20:55:26 -03 LOG:  sentencia: INSERT INTO categoria (nombre, descripcion)
         VALUES ('CAT_AUDIT_TEST', 'Categoria de prueba de auditoria - Parte B')
         RETURNING id, nombre;
-
-        -- 3. ACTUALIZACION: misma fila de prueba.
-        UPDATE categoria
+2026-10-14 20:55:26 -03 LOG:  sentencia: UPDATE categoria
         SET descripcion = 'Categoria de prueba de auditoria - Parte B (modificada)'
         WHERE nombre = 'CAT_AUDIT_TEST';
-
-        -- 4. LOGIN FALLIDO: mail inexistente + clave incorrecta (0 filas, no error).
-        SELECT * FROM fn_autenticar('no.existe.audit@example.com', 'clave_incorrecta_1');
-
-        DO $$ BEGIN RAISE NOTICE 'auditoria_test: fin'; END $$;
-
-        ROLLBACK;
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('no.existe.audit@example.com', 'clave_incorrecta_1');
+2026-10-14 20:55:26 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'auditoria_test: fin'; END $$;
+2026-10-14 20:55:26 -03 LOG:  sentencia: ROLLBACK;
+2026-10-14 20:55:26 -03 LOG:  desconexión: duración de sesión: 0:00:00.126 usuario=postgres base=copia_u5 host=::1 port=46715
+2026-10-14 20:55:26 -03 LOG:  conexión recibida: host=::1 port=46716
+2026-10-14 20:55:26 -03 FATAL:  la autentificación password falló para el usuario «app_web»
+2026-10-14 20:55:26 -03 DETALLE:  La conexión coincidió con el archivo «C:/Program Files/PostgreSQL/17/data/pg_hba.conf» línea 117: «host    all             all             ::1/128                 scram-sha-256»
+2026-10-14 20:55:26 -03 LOG:  conexión recibida: host=::1 port=46717
+2026-10-14 20:55:26 -03 LOG:  conexión autenticada: identidad=«postgres» método=scram-sha-256 (C:/Program Files/PostgreSQL/17/data/pg_hba.conf:117)
+2026-10-14 20:55:26 -03 LOG:  conexión autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicación=psql
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT 'auditoria_b: fin' AS marca;
+2026-10-14 20:55:26 -03 LOG:  desconexión: duración de sesión: 0:00:00.026 usuario=postgres base=copia_u5 host=::1 port=46717

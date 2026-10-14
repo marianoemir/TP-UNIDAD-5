@@ -1,0 +1,44 @@
+﻿2026-10-14 20:55:26 -03 LOG:  conexi�n recibida: host=::1 port=46714
+2026-10-14 20:55:26 -03 LOG:  conexi�n autenticada: identidad=�postgres� m�todo=scram-sha-256 (C:/Program Files/PostgreSQL/17/data/pg_hba.conf:117)
+2026-10-14 20:55:26 -03 LOG:  conexi�n autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicaci�n=psql
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT 'auditoria_b: inicio' AS marca;
+2026-10-14 20:55:26 -03 LOG:  desconexión: duración de sesión: 0:00:00.027 usuario=postgres base=copia_u5 host=::1 port=46714
+2026-10-14 20:55:26 -03 LOG:  conexi�n recibida: host=::1 port=46715
+2026-10-14 20:55:26 -03 LOG:  conexi�n autenticada: identidad=�postgres� m�todo=scram-sha-256 (C:/Program Files/PostgreSQL/17/data/pg_hba.conf:117)
+2026-10-14 20:55:26 -03 LOG:  conexi�n autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicaci�n=psql
+2026-10-14 20:55:26 -03 LOG:  sentencia: DO $$
+
+	BEGIN
+
+	    IF current_database() IN ('postgres', 'plantilla_food_store') THEN
+
+	        RAISE EXCEPTION 'Base equivocada (%). Conectarse a copia_u5.', current_database();
+
+	    END IF;
+
+	END $$;
+2026-10-14 20:55:26 -03 LOG:  sentencia: BEGIN;
+2026-10-14 20:55:26 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'auditoria_test: inicio'; END $$;
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT * FROM v_productos_vigentes LIMIT 5;
+2026-10-14 20:55:26 -03 LOG:  sentencia: INSERT INTO categoria (nombre, descripcion)
+
+	VALUES ('CAT_AUDIT_TEST', 'Categoria de prueba de auditoria - Parte B')
+
+	RETURNING id, nombre;
+2026-10-14 20:55:26 -03 LOG:  sentencia: UPDATE categoria
+
+	SET descripcion = 'Categoria de prueba de auditoria - Parte B (modificada)'
+
+	WHERE nombre = 'CAT_AUDIT_TEST';
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT * FROM fn_autenticar('no.existe.audit@example.com', 'clave_incorrecta_1');
+2026-10-14 20:55:26 -03 LOG:  sentencia: DO $$ BEGIN RAISE NOTICE 'auditoria_test: fin'; END $$;
+2026-10-14 20:55:26 -03 LOG:  sentencia: ROLLBACK;
+2026-10-14 20:55:26 -03 LOG:  desconexión: duración de sesión: 0:00:00.126 usuario=postgres base=copia_u5 host=::1 port=46715
+2026-10-14 20:55:26 -03 LOG:  conexi�n recibida: host=::1 port=46716
+2026-10-14 20:55:26 -03 FATAL:  la autentificaci�n password fall� para el usuario �app_web�
+2026-10-14 20:55:26 -03 DETALLE:  La conexi�n coincidi� con el archivo �C:/Program Files/PostgreSQL/17/data/pg_hba.conf� l�nea 117: �host    all             all             ::1/128                 scram-sha-256�
+2026-10-14 20:55:26 -03 LOG:  conexi�n recibida: host=::1 port=46717
+2026-10-14 20:55:26 -03 LOG:  conexi�n autenticada: identidad=�postgres� m�todo=scram-sha-256 (C:/Program Files/PostgreSQL/17/data/pg_hba.conf:117)
+2026-10-14 20:55:26 -03 LOG:  conexi�n autorizada: usuario=postgres base_de_datos=copia_u5 nombre_de_aplicaci�n=psql
+2026-10-14 20:55:26 -03 LOG:  sentencia: SELECT 'auditoria_b: fin' AS marca;
+2026-10-14 20:55:26 -03 LOG:  desconexión: duración de sesión: 0:00:00.026 usuario=postgres base=copia_u5 host=::1 port=46717
