@@ -32,7 +32,7 @@ Equipo de 3 integrantes: Mariano, Andrés y Facundo.
 | **I3** (Parte D) | — | Nada de A, B ni C | Parte independiente: solo necesita `usuario` en `copia_u5` |
 | **I2** (Parte B) | — | Nada de A, C ni D | Parte independiente: arranca desde el día uno |
 | **M** (Parte A) | — | Nada de B, C ni D | Es la base de los demás |
-| **Parte E** | Los tres | Las bitácoras personales de cada uno (`bitacora_m.md`, `bitacora_i2.md`, `bitacora_i3.md`) | Consolidar en `BITACORA.md` |
+| **Parte E** | Los tres | Las bitácoras personales de cada uno (consolidadas luego en `BITACORA.md`) | Consolidar en `BITACORA.md` |
 
 Resumen de flujo:
 

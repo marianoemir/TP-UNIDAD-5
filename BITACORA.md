@@ -1,7 +1,7 @@
 # Bitácora de uso de IA — TP Unidad 5 (Food Store)
 
-Consolidación de la Parte E. Cada fila es una interacción real con una IA, tomada de las bitácoras personales
-(`bitacora_m.md`, `bitacora_andres.md`, `bitacora_Facundo.md`) y de la evidencia guardada en `docs/`.
+Consolidación de la Parte E. Cada fila es una interacción real con una IA, tomada de las bitácoras personales de
+cada integrante (consolidadas acá y conservadas en el historial de Git) y de la evidencia guardada en `docs/`.
 Nunca se envió a una IA un dato personal real ni un hash: solo valores sintéticos y logs ya anonimizados.
 
 ## Herramientas declaradas
@@ -78,7 +78,7 @@ dueño `admin_datos`.
 |---|---|---|
 | **OpenCode:** especificación de una agregación sobre `usuario_anon` (usuarios por rol y mes de alta) y pedido de la consulta equivalente sobre `usuario`. Sin datos reales | Devolvió la misma consulta dos veces. La primera citó `sql/verificacion_equivalencia.sql:13-16`, es decir que **leyó el archivo del repo y no la derivó de la especificación**; la segunda no citó nada | No tomé las respuestas como prueba de corrección: ejecuté ambas consultas en `copia_u5` y comparé. Los conteos y la diferencia `EXCEPT` en los dos sentidos dieron 0 filas (`docs/verificacion_equivalencia.md`) |
 | **Mariano:** control adicional tras ver que todos los usuarios se cargaron el mismo mes | — | Agrupación por rol, `eliminado` y día de alta: coincide. Se documentó el límite: la comprobación por mes es poco exigente, y `usuario_anon` solo es equivalente para agregados sobre `rol`, `eliminado` y `created_at` |
-| **Facundo · Gemini (no OpenCode):** prompt "Paquete B" (`bitacora_Facundo.md`) que pedía generar `usuario_anon.sql`, `verificacion_equivalencia.md` e `informe_incidente.md`, e **incluía en el propio prompt los resultados esperados** (ADMIN = 1, USUARIO = 20005, periodo 2026-10) y el contenido de la decisión de contención. Sin datos reales | Generó los informes. En `verificacion_equivalencia.md` afirmó que ambas consultas "fueron ejecutadas contra `copia_u5`" y dieron esos conteos | Esa afirmación no tenía sustento: Gemini no ejecuta nada y los números venían del prompt, no de una corrida. El equipo reemplazó esa versión (commit `97f6d12`) por la de Mariano (commit `cfb577e`), que ejecuta ambas consultas en `copia_u5` y compara con `EXCEPT` en los dos sentidos |
+| **Facundo · Gemini (no OpenCode):** prompt "Paquete B" (versión original en el commit `97f6d12`) que pedía generar `usuario_anon.sql`, `verificacion_equivalencia.md` e `informe_incidente.md`, e **incluía en el propio prompt los resultados esperados** (ADMIN = 1, USUARIO = 20005, periodo 2026-10) y el contenido de la decisión de contención. Sin datos reales | Generó los informes. En `verificacion_equivalencia.md` afirmó que ambas consultas "fueron ejecutadas contra `copia_u5`" y dieron esos conteos | Esa afirmación no tenía sustento: Gemini no ejecuta nada y los números venían del prompt, no de una corrida. El equipo reemplazó esa versión (commit `97f6d12`) por la de Mariano (commit `cfb577e`), que ejecuta ambas consultas en `copia_u5` y compara con `EXCEPT` en los dos sentidos |
 
 ## Parte E — Cierre
 
