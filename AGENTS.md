@@ -7,7 +7,7 @@ protección de datos personales (Base de Datos II, UTN).
 
 | Componente | Tecnología / Versión | Propósito |
 |---|---|---|
-| Motor BD | PostgreSQL 16+ (el grupo usa 18 en local) | Base de datos relacional |
+| Motor BD | PostgreSQL 16+ (la evidencia del TP se capturó en 17.10) | Base de datos relacional |
 | Lenguaje | SQL / PL/pgSQL | Roles, permisos, funciones, scripts de prueba |
 | Extensión | `pgcrypto` | `crypt()` y `gen_salt()`: hash de contraseñas (la usan `fn_autenticar` y `fn_resetear_password`) |
 | Cliente | pgAdmin 4 y `psql` (SQL Shell) | `\du` es un meta-comando de `psql`: no funciona en el Query Tool de pgAdmin. Alternativa equivalente: `SELECT … FROM pg_roles` |

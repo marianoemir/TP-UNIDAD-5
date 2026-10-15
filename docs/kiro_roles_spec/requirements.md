@@ -8,7 +8,7 @@
 
 ## Contexto
 
-- Motor: PostgreSQL 16+ (el grupo usa 18 en local). Base de trabajo: `copia_u5`.
+- Motor: PostgreSQL 16+ (la evidencia del TP se capturó en 17.10). Base de trabajo: `copia_u5`.
 - Hoy las cinco tablas (`categoria`, `producto`, `usuario`, `pedido`, `detalle_pedido`)
   son propiedad del rol `postgres`. La Parte A las pasa a `admin_datos` (**D4**).
 - `usuario.rol` (ENUM `ADMIN`/`USUARIO`) es un dato de la aplicación: **no** es un rol

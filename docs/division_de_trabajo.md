@@ -1,12 +1,12 @@
 # División de trabajo — TP Unidad 5 (Food Store)
 
-Equipo de 3 integrantes. Reemplazar los nombres de **Integrante 2** e **Integrante 3** por los reales.
+Equipo de 3 integrantes: Mariano, Andrés y Facundo.
 
 | Sigla | Integrante |
 |---|---|
 | **M** | Mariano |
-| **I2** | Integrante 2 (completar) |
-| **I3** | Integrante 3 (completar) |
+| **I2** | Andrés |
+| **I3** | Facundo |
 
 ## 1. Reparto por parte
 
